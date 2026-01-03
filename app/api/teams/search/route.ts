@@ -28,7 +28,9 @@ export async function POST(request: Request) {
 
     console.log("[v0] Search API: Found teams:", data?.length || 0)
     if (data && data.length > 0) {
-      console.log("[v0] Search API: First team:", data[0])
+      data.forEach((t: any) => {
+        console.log(`[v0] Search result: ${t.name} (Logo: ${t.logo_url ? "YES" : "NO"})`)
+      })
     }
 
     return NextResponse.json({ teams: data || [] })

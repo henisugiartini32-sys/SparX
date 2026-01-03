@@ -86,15 +86,23 @@ export default function MapComponent({ center, teams, userLocation, onChallenge 
     }
 
     teams.forEach((team) => {
+      console.log(`[v0] Rendering marker for ${team.name}, ID: ${team.id}, logo_url: ${team.logo_url || "NULL"}`)
+
       const color =
         team.skill_level === "advanced" ? "#ef4444" : team.skill_level === "intermediate" ? "#f59e0b" : "#10b981"
+
+      const markerHtml = team.logo_url
+        ? `<div style="background: white; width: 44px; height: 44px; border-radius: 50%; border: 3px solid ${color}; box-shadow: 0 4px 12px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; overflow: hidden; animation: bounce 0.5s ease-out;">
+             <img src="${team.logo_url}" alt="${team.name}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.parentElement.innerHTML='⚽';" />
+           </div>`
+        : `<div style="background: ${color}; width: 34px; height: 34px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 18px; animation: bounce 0.5s ease-out;">⚽</div>`
 
       const teamMarker = L.marker([team.latitude, team.longitude], {
         icon: L.divIcon({
           className: "custom-team-marker",
-          html: `<div style="background: ${color}; width: 30px; height: 30px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 16px;">⚽</div>`,
-          iconSize: [30, 30],
-          iconAnchor: [15, 15],
+          html: markerHtml,
+          iconSize: team.logo_url ? [44, 44] : [34, 34],
+          iconAnchor: team.logo_url ? [22, 22] : [17, 17],
         }),
       }).addTo(map)
 
@@ -109,8 +117,11 @@ export default function MapComponent({ center, teams, userLocation, onChallenge 
 
       teamMarker.bindPopup(
         `<div style="min-width: 200px;">
-          <b>${team.name}</b><br>
-          ${team.description || ""}<br>
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            ${team.logo_url ? `<img src="${team.logo_url}" style="width: 32px; height: 32px; border-radius: 4px; object-fit: cover;" />` : ""}
+            <b style="font-size: 14px;">${team.name}</b>
+          </div>
+          <p style="margin: 0 0 8px 0; font-size: 13px;">${team.description || ""}</p>
           <small>Level: ${skillLevelText}</small>
           ${distanceText}
           ${contactText}

@@ -13,16 +13,16 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { data, error } = await supabase.from("teams").select("*").eq("user_id", user.id).single()
+    const { data, error } = await supabase.from("teams").select("*").eq("user_id", user.id).maybeSingle()
 
     if (error) {
-      // No team found is not an error
-      if (error.code === "PGRST116") {
-        console.log("[v0] No team found for user")
-        return NextResponse.json({ team: null })
-      }
       console.error("[v0] Error fetching user's team:", error)
       return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    if (!data) {
+      console.log("[v0] No team found for user")
+      return NextResponse.json({ team: null })
     }
 
     const enrichedTeam = data
@@ -54,7 +54,7 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json()
-    const { name, description, skill_level, contact_phone, city, address, latitude, longitude } = body
+    const { name, description, skill_level, contact_phone, city, address, latitude, longitude, logo_url } = body // added logo_url
 
     if (!name || !city || !latitude || !longitude) {
       return NextResponse.json({ error: "Name, city, latitude, and longitude are required" }, { status: 400 })
@@ -69,6 +69,7 @@ export async function PUT(request: Request) {
         contact_phone,
         city,
         address,
+        logo_url, // added logo_url
         location: `POINT(${longitude} ${latitude})`,
         updated_at: new Date().toISOString(),
       })

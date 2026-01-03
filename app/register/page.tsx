@@ -39,15 +39,17 @@ export default function RegisterPage() {
     const supabase = createClient()
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard`,
+          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/login`,
         },
       })
 
       if (error) throw error
+
+      await supabase.auth.signOut()
 
       router.push("/register-success")
     } catch (error: unknown) {

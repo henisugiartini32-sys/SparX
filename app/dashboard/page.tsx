@@ -12,12 +12,19 @@ import { ChallengesManager } from "@/components/challenges-manager"
 export default async function DashboardPage() {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser()
+  let user = null
+  try {
+    const {
+      data: { user: authUser },
+      error: authError,
+    } = await supabase.auth.getUser()
 
-  if (error || !user) {
+    if (authError || !authUser) {
+      redirect("/login")
+    }
+    user = authUser
+  } catch (err) {
+    console.log("[v0] Dashboard auth exception:", err)
     redirect("/login")
   }
 

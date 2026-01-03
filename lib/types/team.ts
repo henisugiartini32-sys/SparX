@@ -9,6 +9,7 @@ export interface Team {
   address: string | null
   latitude: number
   longitude: number
+  logo_url?: string | null // added logo_url field
   distance_meters?: number
 }
 

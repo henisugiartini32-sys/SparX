@@ -202,11 +202,26 @@ export function MapSearch() {
                   <CardContent className="p-4">
                     <div className="space-y-3">
                       <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0 flex-1">
-                          <h3 className="text-balance font-semibold leading-tight">{team.name}</h3>
-                          {team.description && (
-                            <p className="mt-1 text-pretty text-sm text-muted-foreground">{team.description}</p>
+                        <div className="flex items-start gap-3 min-w-0 flex-1">
+                          {team.logo_url ? (
+                            <img
+                              src={team.logo_url || "/placeholder.svg"}
+                              alt={team.name}
+                              className="h-10 w-10 rounded-md border object-cover shrink-0"
+                            />
+                          ) : (
+                            <div className="h-10 w-10 rounded-md border bg-muted flex items-center justify-center shrink-0">
+                              <Users className="h-5 w-5 text-muted-foreground" />
+                            </div>
                           )}
+                          <div className="min-w-0">
+                            <h3 className="text-balance font-semibold leading-tight">{team.name}</h3>
+                            {team.description && (
+                              <p className="mt-1 text-pretty text-sm text-muted-foreground line-clamp-2">
+                                {team.description}
+                              </p>
+                            )}
+                          </div>
                         </div>
                         {team.skill_level && (
                           <Badge

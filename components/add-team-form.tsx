@@ -9,9 +9,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2, MapPin, Plus, Save } from "lucide-react"
+import { Loader2, MapPin, Plus, Save, Upload, X } from "lucide-react"
 import { regions, type Kabupaten } from "@/lib/data/regions"
 import dynamic from "next/dynamic"
+import { createClient } from "@/lib/supabase/client"
 
 const MapPicker = dynamic(() => import("@/components/map-picker"), {
   ssr: false,
@@ -28,6 +29,7 @@ interface AddTeamFormProps {
 
 export function AddTeamForm({ onSuccess }: AddTeamFormProps) {
   const [loading, setLoading] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [initialLoading, setInitialLoading] = useState(true)
   const [isEditMode, setIsEditMode] = useState(false)
   const [teamId, setTeamId] = useState<string | null>(null)
@@ -41,6 +43,7 @@ export function AddTeamForm({ onSuccess }: AddTeamFormProps) {
     desa: "",
     latitude: -7.3261,
     longitude: 108.2872,
+    logo_url: "",
   })
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
@@ -55,7 +58,6 @@ export function AddTeamForm({ onSuccess }: AddTeamFormProps) {
           setIsEditMode(true)
           setTeamId(data.team.id)
 
-          // Parse address back into components
           const addressParts = data.team.address ? data.team.address.split(", ") : []
           const desa = addressParts[0] || ""
           const kecamatan = addressParts[1] || ""
@@ -71,6 +73,7 @@ export function AddTeamForm({ onSuccess }: AddTeamFormProps) {
             desa: desa,
             latitude: data.team.latitude || -7.3261,
             longitude: data.team.longitude || 108.2872,
+            logo_url: data.team.logo_url || "",
           })
         }
       } catch (err) {
@@ -108,6 +111,36 @@ export function AddTeamForm({ onSuccess }: AddTeamFormProps) {
     })
   }
 
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    setError("")
+
+    try {
+      const supabase = createClient()
+      const { data: userData } = await supabase.auth.getUser()
+      if (!userData.user) throw new Error("Anda harus login")
+
+      const fileExt = file.name.split(".").pop()
+      const fileName = `${userData.user.id}-${Math.random()}.${fileExt}`
+      const filePath = `team-logos/${fileName}`
+
+      const { error: uploadError } = await supabase.storage.from("teams").upload(filePath, file)
+
+      if (uploadError) throw uploadError
+
+      const { data: urlData } = supabase.storage.from("teams").getPublicUrl(filePath)
+      setFormData({ ...formData, logo_url: urlData.publicUrl })
+    } catch (err: any) {
+      console.error("[v0] Error uploading logo:", err)
+      setError("Gagal mengunggah logo: " + err.message)
+    } finally {
+      setUploading(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -140,6 +173,7 @@ export function AddTeamForm({ onSuccess }: AddTeamFormProps) {
           address: address,
           latitude: formData.latitude,
           longitude: formData.longitude,
+          logo_url: formData.logo_url,
         }),
       })
 
@@ -345,6 +379,50 @@ export function AddTeamForm({ onSuccess }: AddTeamFormProps) {
               <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                 <div>Latitude: {formData.latitude.toFixed(6)}</div>
                 <div>Longitude: {formData.longitude.toFixed(6)}</div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Logo Tim</Label>
+              <div className="flex items-center gap-4">
+                <div className="relative h-24 w-24 overflow-hidden rounded-lg border bg-muted">
+                  {formData.logo_url ? (
+                    <>
+                      <img
+                        src={formData.logo_url || "/placeholder.svg"}
+                        alt="Logo Tim"
+                        className="h-full w-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, logo_url: "" })}
+                        className="absolute right-1 top-1 rounded-full bg-background/80 p-1 shadow-sm hover:bg-background"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </>
+                  ) : (
+                    <div className="flex h-full w-full flex-col items-center justify-center text-muted-foreground">
+                      <Upload className="mb-1 h-6 w-6" />
+                      <span className="text-[10px]">Pilih Foto</span>
+                    </div>
+                  )}
+                  {uploading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-background/50">
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 space-y-1">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoUpload}
+                    disabled={uploading}
+                    className="max-w-[200px]"
+                  />
+                  <p className="text-[11px] text-muted-foreground">Format JPG, PNG atau WebP (Max 2MB)</p>
+                </div>
               </div>
             </div>
           </div>

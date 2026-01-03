@@ -45,7 +45,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { name, description, skill_level, contact_phone, city, address, latitude, longitude } = body
+    const { name, description, skill_level, contact_phone, city, address, latitude, longitude, logo_url } = body
 
     if (!name || !city || !latitude || !longitude) {
       return NextResponse.json({ error: "Name, city, latitude, and longitude are required" }, { status: 400 })
@@ -62,6 +62,7 @@ export async function POST(request: Request) {
           contact_phone,
           city,
           address,
+          logo_url,
           location: `POINT(${longitude} ${latitude})`,
         },
       ])
