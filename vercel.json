@@ -1,6 +1,9 @@
 {
-  "buildCommand": "pnpm build",
+  "buildCommand": "pnpm install --frozen-lockfile=false && pnpm build",
   "devCommand": "pnpm dev",
-  "installCommand": "pnpm install",
-  "framework": "nextjs"
+  "installCommand": "pnpm install --frozen-lockfile=false",
+  "framework": "nextjs",
+  "env": {
+    "PNPM_HOME": ".pnpm"
+  }
 }
